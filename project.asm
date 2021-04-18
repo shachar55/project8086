@@ -13,6 +13,31 @@ DATASEG
 
 	BackgroundColor dw 0
 
+	BrickColor dw ?
+	BrickX dw ?
+	BrickY dw ?
+	BrickWidth dw 10
+	BrickLength dw 20
+	BricksInRow dw 10
+	
+	BrickLvl4Color dw 14
+	BrickLvl4X dw 14,44,74,104,134,164,194,224,254,284
+	BrickLvl4Y dw 85
+	
+	BrickLvl3Color dw 48
+	BrickLvl3X dw 14,44,74,104,134,164,194,224,254,284
+	BrickLvl3Y dw 65
+
+	BrickLvl2Color dw 11
+	BrickLvl2X dw 14,44,74,104,134,164,194,224,254,284
+	BrickLvl2Y dw 45
+
+	BrickLvl1Color dw 40
+	BrickLvl1X dw 14,44,74,104,134,164,194,224,254,284
+	BrickLvl1Y dw 25
+
+
+
 ; --------------------------
 CODESEG
 start:
@@ -24,12 +49,18 @@ start:
 	;call ResetBackground
 MainLoop:
 
+
+
 	push ax
 	mov ax,[PlayerBarColor]
 	mov [PrintColor],ax
-	call DrawRectangle
+	call PrintBar
 	pop ax
 	
+	call PrintBricksLvl1
+	call PrintBricksLvl2
+	call PrintBricksLvl3
+	call PrintBricksLvl4
 
 	mov ah,1
 	int 16h
@@ -39,21 +70,20 @@ MainLoop:
 	cmp ah,1h
 	je exit
 	cmp ah,1Eh
-	je @@MoveLeft
+	je MoveLeft
 	cmp ah,20h
-	je @@MoveRight
+	je MoveRight
 	jmp MainLoop
 	
-@@MoveLeft:
+MoveLeft:
 	call LeftMove
 	jmp MainLoop
 	
-@@MoveRight:
+MoveRight:
 	call RightMove
 	jmp MainLoop
 	
 	
-@@skip:	
 	
 	
 ; --------------------------
@@ -67,12 +97,143 @@ exit:
 	mov ax, 4c00h
 	int 21h
 	
+proc PrintBricksLvl4
+	push ax
+	push cx
+	push si
+
+	mov ax,[BrickLvl4Color]
+	mov [BrickColor],ax
+
+	mov ax,[BrickLvl4Y]
+	mov [BrickY],ax
+
+	xor cx,cx
+	xor si,si
+
+	mov cx, [BricksInRow]
+	@@PrintEachBrick:
+
+		mov ax,[BrickLvl4X+si]
+		mov [BrickX],ax
+		cmp [BrickX],0
+		je @@Skip
+
+			call PrintBrick
+		@@Skip:
+		add si,2
+		loop @@PrintEachBrick
+
+	pop si
+	pop cx
+	pop ax
+	ret
+endp
+
+proc PrintBricksLvl3
+	push ax
+	push cx
+	push si
+
+	mov ax,[BrickLvl3Color]
+	mov [BrickColor],ax
+
+	mov ax,[BrickLvl3Y]
+	mov [BrickY],ax
+
+	xor cx,cx
+	xor si,si
+
+	mov cx, [BricksInRow]
+	@@PrintEachBrick:
+
+		mov ax,[BrickLvl3X+si]
+		mov [BrickX],ax
+		cmp [BrickX],0
+		je @@Skip
+
+			call PrintBrick
+		@@Skip:
+		add si,2
+		loop @@PrintEachBrick
+
+	pop si
+	pop cx
+	pop ax
+	ret
+endp
+
+proc PrintBricksLvl2
+	push ax
+	push cx
+	push si
+
+	mov ax,[BrickLvl2Color]
+	mov [BrickColor],ax
+
+	mov ax,[BrickLvl2Y]
+	mov [BrickY],ax
+
+	xor cx,cx
+	xor si,si
+
+	mov cx, [BricksInRow]
+	@@PrintEachBrick:
+
+		mov ax,[BrickLvl2X+si]
+		mov [BrickX],ax
+		cmp [BrickX],0
+		je @@Skip
+
+			call PrintBrick
+		@@Skip:
+		add si,2
+		loop @@PrintEachBrick
+
+	pop si
+	pop cx
+	pop ax
+	ret
+endp
+
+proc PrintBricksLvl1
+	push ax
+	push cx
+	push si
+
+	mov ax,[BrickLvl1Color]
+	mov [BrickColor],ax
+
+	mov ax,[BrickLvl1Y]
+	mov [BrickY],ax
+
+	xor cx,cx
+	xor si,si
+
+	mov cx, [BricksInRow]
+	@@PrintEachBrick:
+
+		mov ax,[BrickLvl1X+si]
+		mov [BrickX],ax
+		cmp [BrickX],0
+		je @@Skip
+
+			call PrintBrick
+		@@Skip:
+		add si,2
+		loop @@PrintEachBrick
+
+	pop si
+	pop cx
+	pop ax
+	ret
+endp
 
 proc LeftMove
 	push ax
 	mov ax,[BackgroundColor]
 	mov [PrintColor],ax
-	call DrawRectangle
+	call PrintBar
 	mov ax,[PlayerBarX]
 	dec ax
 	dec ax
@@ -86,7 +247,7 @@ proc RightMove
 	push ax
 	mov ax,[BackgroundColor]
 	mov [PrintColor],ax
-	call DrawRectangle
+	call PrintBar
 	mov ax,[PlayerBarX]
 	inc ax
 	inc ax
@@ -110,7 +271,7 @@ endp
 
  
 
-proc DrawRectangle
+proc PrintBar
 	mov ax, [PrintColor]
 	mov cx,[PlayerBarX]
 	mov dx, [PlayerBarY]
@@ -131,6 +292,39 @@ proc DrawRectangle
 	add dx,[PlayerBarWidth]
 	call DrawHorizontalLine
 @@exit:
+	ret
+endp
+
+proc PrintBrick
+	push ax
+	push cx
+	push dx
+	push si
+
+	mov ax, [BrickColor]
+	mov cx,[BrickX]
+	mov dx, [BrickY]
+	mov si,[BrickLength]
+	call DrawHorizontalLine
+	
+	mov di,[BrickLength]
+	mov si,[BrickWidth]
+@@Fill:
+	call DrawVerticalLine
+	inc cx
+	dec di
+	cmp di,0
+	jne @@Fill
+	
+	mov cx, [BrickX]
+	mov si,[BrickLength]
+	add dx,[BrickWidth]
+	call DrawHorizontalLine
+@@exit:
+	pop si
+	pop dx
+	pop	cx
+	pop ax
 	ret
 endp
 
