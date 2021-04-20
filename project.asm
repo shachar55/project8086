@@ -9,7 +9,13 @@ DATASEG
 	PlayerBarWidth dw 5
 	PlayerBarLength dw 40
 
-	PrintColor dw ?
+	BallY dw 160
+	BallX dw 159
+	BallColor dw 7
+	BallRadius dw 3
+
+	PrintBarColor dw ?
+	PrintBallColor dw ?
 
 	BackgroundColor dw 0
 
@@ -21,7 +27,7 @@ DATASEG
 	BricksInRow dw 10
 	
 	BrickLvl4Color dw 14
-	BrickLvl4X dw 14,44,74,104,134,164,194,224,254,284
+	BrickLvl4X dw 14,44,74,104,134,164,194,224,254,284	
 	BrickLvl4Y dw 85
 	
 	BrickLvl3Color dw 48
@@ -49,11 +55,15 @@ start:
 	;call ResetBackground
 MainLoop:
 
-
+	push ax
+	mov ax,[BallColor]
+	mov [PrintBallColor],ax
+	call PrintBall
+	pop ax
 
 	push ax
 	mov ax,[PlayerBarColor]
-	mov [PrintColor],ax
+	mov [PrintBarColor],ax
 	call PrintBar
 	pop ax
 	
@@ -61,6 +71,17 @@ MainLoop:
 	call PrintBricksLvl2
 	call PrintBricksLvl3
 	call PrintBricksLvl4
+
+	push ax
+	mov ax,0
+	mov [PrintBallColor],ax
+	call PrintBall
+	pop ax
+
+	inc [BallY]
+	inc [BallX]
+	inc [BallY]
+	inc [BallX]
 
 	mov ah,1
 	int 16h
@@ -97,6 +118,94 @@ exit:
 	mov ax, 4c00h
 	int 21h
 	
+proc PrintBall
+	push ax
+	push bx
+	push cx
+	push dx
+	push si
+	push di
+
+	mov ax, [PrintBallColor]
+	mov ah,0ch
+	mov bh,0
+
+	
+	mov dx,[BallY]
+	sub dx,2
+	
+	xor si,si
+	mov cx,3
+	@@FirstRow:
+		push cx
+
+		mov cx,[BallX]
+		dec cx
+		add cx,si
+
+		int 10h
+
+		inc si
+		pop cx
+		loop @@FirstRow
+
+	
+		
+	;-----------------------
+	xor di,di
+	mov cx,3
+	@@ThreeTimes:
+		push cx
+
+		mov dx,[BallY]
+		dec dx
+		add dx,di
+		xor si,si
+		mov cx,5
+		@@MidRows:
+			push cx
+
+			mov cx,[BallX]
+			sub cx,2
+			add cx,si
+
+			int 10h
+
+			inc si
+			pop cx
+			loop @@MidRows
+
+	inc di
+	pop cx
+	loop @@ThreeTimes
+	;-----------------------------\
+	mov dx,[BallY]
+	add dx,2
+	xor si,si
+	mov cx,3
+	@@LastRow:
+		push cx
+
+		mov cx,[BallX]
+		dec cx
+		add cx,si
+
+		int 10h
+
+		inc si
+		pop cx
+		loop @@LastRow
+
+
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+endp
+
 proc PrintBricksLvl4
 	push ax
 	push cx
@@ -232,7 +341,7 @@ endp
 proc LeftMove
 	push ax
 	mov ax,[BackgroundColor]
-	mov [PrintColor],ax
+	mov [PrintBarColor],ax
 	call PrintBar
 	mov ax,[PlayerBarX]
 	dec ax
@@ -246,7 +355,7 @@ endp
 proc RightMove
 	push ax
 	mov ax,[BackgroundColor]
-	mov [PrintColor],ax
+	mov [PrintBarColor],ax
 	call PrintBar
 	mov ax,[PlayerBarX]
 	inc ax
@@ -272,7 +381,7 @@ endp
  
 
 proc PrintBar
-	mov ax, [PrintColor]
+	mov ax, [PrintBarColor]
 	mov cx,[PlayerBarX]
 	mov dx, [PlayerBarY]
 	mov si,[PlayerBarLength]
